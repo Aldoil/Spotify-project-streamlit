@@ -87,9 +87,11 @@ def visualize(df):
     df_artist_gruped['Minutes played'] = round(df_artist_gruped['ms_played']/60000, 2)
     df_artist_gruped['Hours played'] = round(df_artist_gruped['ms_played']/3600000, 2)
     df_artist_gruped['Days played'] = round(df_artist_gruped['Hours played'] / 24, 2)
-    df_artist_gruped
+    df_artist_gruped.rename(columns={'master_metadata_album_artist_name': 'Artist'}, inplace=True)
+    df_artist_gruped = df_artist_gruped.sort_values('Minutes played', ascending=False).head(20)
 
-
+    artist_plot = px.pie(df_artist_gruped, values='Hours played', names='Artist', title='Most listened artists')
+    st.plotly_chart(artist_plot)
 
 
     ### Artists plot ###
@@ -97,7 +99,11 @@ def visualize(df):
     df_songs_gruped['Minutes played'] = round(df_songs_gruped['ms_played']/60000, 2)
     df_songs_gruped['Hours played'] = round(df_songs_gruped['ms_played']/3600000, 2)
     df_songs_gruped['Days played'] = round(df_songs_gruped['Hours played'] / 24, 2)
-    df_songs_gruped   
+    df_songs_gruped.rename(columns={'master_metadata_track_name': 'Song'}, inplace=True)
+    df_songs_gruped = df_songs_gruped.sort_values('Minutes played', ascending=True).head(20)
+
+    songs_plot = px.pie(df_songs_gruped, values='Minutes played', names='Song', title='Most played songs')
+    st.plotly_chart(songs_plot)
 
 
 
