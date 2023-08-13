@@ -30,6 +30,9 @@ def visualize(df):
     system = st.sidebar.multiselect('System', ['All'] + df['System'].unique().tolist())
     device = st.sidebar.multiselect('Device', ['All'] + df['Device'].unique().tolist())
     audio_type = st.sidebar.multiselect('Audio type', df['Type'].unique().tolist())
+    artist = st.sidebar.multiselect('Artist', ['All'] + df['master_metadata_album_artist_name'].unique().tolist())
+    song = st.sidebar.multiselect('Song', ['All'] + df['master_metadata_track_name'].unique().tolist())
+
     df = df[(df['date'] >= first_date) & (df['date'] <= last_date)]
 
     if system and system != ['All']:
@@ -37,15 +40,22 @@ def visualize(df):
     if device and device != ['All']:
         df = df[df['Device'].isin(device)]
     if audio_type:
-        df = df[df['Audio Type'].isin(audio_type)]
+        df = df[df['Type'].isin(audio_type)]
+    if artist and artist != ['All']:
+        df = df[df['master_metadata_album_artist_name'].isin(artist)]
+    if song and song != ['All']:
+        df = df[df['master_metadata_track_name'].isin(song)]
 
 
     ### Information part ###
     st.info(f"Time played: {round(df['ms_played'].sum()/60000, 2)} minutes \
                 which is {round(df['ms_played'].sum()/3600000, 2)} hours \
                 which is {round(df['ms_played'].sum()/3600000/24, 2)} days.")
+    st.info(f"Number of unique artists listened: {df['master_metadata_album_artist_name'].nunique()}")
+    st.info(f"Number of unique songs/podcasts listened: {df['master_metadata_track_name'].nunique()}")
+
     
-    ### Data plots ###
+    ### Date plots ###
     df_min_played = df.groupby(['date'])['ms_played'].sum().reset_index()
     df_min_played['Minutes played'] = round(df_min_played['ms_played']/60000, 2)
     df_min_played['Hours played'] = round(df_min_played['ms_played']/3600000, 2)
@@ -70,6 +80,26 @@ def visualize(df):
 
     st.plotly_chart(line_date_plot)
     df_min_played
+
+    ### Artists plot ###
+
+    df_artist_gruped = df.groupby('master_metadata_album_artist_name')['ms_played'].sum().reset_index()
+    df_artist_gruped['Minutes played'] = round(df_artist_gruped['ms_played']/60000, 2)
+    df_artist_gruped['Hours played'] = round(df_artist_gruped['ms_played']/3600000, 2)
+    df_artist_gruped['Days played'] = round(df_artist_gruped['Hours played'] / 24, 2)
+    df_artist_gruped
+
+
+
+
+    ### Artists plot ###
+    df_songs_gruped = df.groupby('master_metadata_track_name')['ms_played'].sum().reset_index()
+    df_songs_gruped['Minutes played'] = round(df_songs_gruped['ms_played']/60000, 2)
+    df_songs_gruped['Hours played'] = round(df_songs_gruped['ms_played']/3600000, 2)
+    df_songs_gruped['Days played'] = round(df_songs_gruped['Hours played'] / 24, 2)
+    df_songs_gruped   
+
+
 
 
 visualize(df)
