@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd 
 import numpy as np 
 import plotly.express as px 
-import plotly.graph_objects as go
-
 
 
 def get_data():
@@ -13,34 +11,33 @@ def get_data():
     for file in uploaded_files:
         # Read the uploaded JSON file
         data = pd.read_json(file)
-        json_data_list.append(data)
+        json_data_list.append(data)  
+    df = pd.concat(json_data_list, ignore_index =True)
+    return df
 
-    try:    
-        df = pd.concat(json_data_list, ignore_index =True)
-        return df
-    except:
-        st.title('There is no data')
         
 def data_processing(df):
+        
     df = df.drop(columns=['username', 'user_agent_decrypted', 'spotify_track_uri', 'spotify_episode_uri', 
-                      'reason_start', 'reason_end', 'offline_timestamp', 'incognito_mode', 'ip_addr_decrypted'])
+                        'reason_start', 'reason_end', 'offline_timestamp', 'incognito_mode', 'ip_addr_decrypted'])
     pattern_1 = r'([^ ]+)'
     pattern_2 = r'\((.*?)\)'
 
-    # Use str.extract to split the 'platform' column
+        # Use str.extract to split the 'platform' column
     df['System'] = df['platform'].str.extract(pattern_1)[0].str.upper()
     df['Device'] = df['platform'].str.extract(pattern_2)[0].str.upper()
     df['System'] = df['System'].replace('OSX', 'OS')
 
-    #Deal with dates 
+        #Deal with dates 
     df['ts'] = pd.to_datetime(df['ts'])
     df['date'] = df['ts'].dt.strftime('%Y-%m-%d')
     df['time'] = df['ts'].dt.strftime('%H:%M')
     df = df.drop(['ts', 'platform'], axis=1)
-    # Create type column
+        # Create type column
     df['Type'] = np.where(df['episode_name'].notna() , 'Podcast', 'Song')
 
     return df
+
 
 def visualize(df):
 
@@ -60,12 +57,12 @@ def visualize(df):
     st.sidebar.header('Your menu')
     first_date = st.sidebar.date_input('Start date', df['date'].min())
     last_date = st.sidebar.date_input('End date', df['date'].max())
-    system = st.sidebar.multiselect('System', ['All'] + df['System'].unique().tolist())
-    device = st.sidebar.multiselect('Device', ['All'] + df['Device'].unique().tolist())
-    audio_type = st.sidebar.multiselect('Audio type', df['Type'].unique().tolist())
-    artist = st.sidebar.multiselect('Artist', ['All'] + df['master_metadata_album_artist_name'].unique().tolist())
-    song = st.sidebar.multiselect('Song', ['All'] + df['master_metadata_track_name'].unique().tolist())
-    country = st.sidebar.multiselect('Listening country', ['All'] + df['conn_country'].unique().tolist())
+    system = st.sidebar.multiselect('System', ['All'] + df['System'].unique().tolist(), default=['All'])
+    device = st.sidebar.multiselect('Device', ['All'] + df['Device'].unique().tolist(), default=['All'])
+    audio_type = st.sidebar.multiselect('Audio type', ['All'] + df['Type'].unique().tolist(), default=['All'])
+    artist = st.sidebar.multiselect('Artist', ['All'] + df['master_metadata_album_artist_name'].unique().tolist(), default=['All'])
+    song = st.sidebar.multiselect('Song', ['All'] + df['master_metadata_track_name'].unique().tolist(), default=['All'])
+    country = st.sidebar.multiselect('Listening country', ['All'] + df['conn_country'].unique().tolist(), default=['All'])
 
     df = df[(df['date'] >= first_date) & (df['date'] <= last_date)]
 
@@ -73,7 +70,7 @@ def visualize(df):
         df = df[df['System'].isin(system)]
     if device and device != ['All']:
         df = df[df['Device'].isin(device)]
-    if audio_type:
+    if audio_type and audio_type != ['All']:
         df = df[df['Type'].isin(audio_type)]
     if artist and artist != ['All']:
         df = df[df['master_metadata_album_artist_name'].isin(artist)]
@@ -84,6 +81,7 @@ def visualize(df):
 
 
     ### Information part ###
+    st.info(f"Number of songs/podcasts played: {df.shape[0]}")
     st.info(f"Time played: {round(df['ms_played'].sum()/60000, 2)} minutes \
                 which is {round(df['ms_played'].sum()/3600000, 2)} hours \
                 which is {round(df['ms_played'].sum()/3600000/24, 2)} days.")
@@ -160,8 +158,13 @@ def visualize(df):
     st.plotly_chart(songs_plot)
 
 
+def main():
+    try:
+        df = get_data()
+        df = data_processing(df)
+        visualize(df)
+    except:
+        st.title('There is no data')
 
-df = get_data()
-df = data_processing(df)
-visualize(df)
-
+r = main()
+print(r)
