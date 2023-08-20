@@ -1,0 +1,8 @@
+1. You have to install streamlit library 
+2. Run terminal/cmd 
+3. In the terminal open folder where "Spotify_main.py" file is 
+4. Run file using streamlit "streamlit run Spotify_main.py" 
+5. Upload your Spotify Json data or use sample_data. 
+
+
+How to get Spotify personal streaming history audio data: https://support.stats.fm/docs/import/spotify-import/
